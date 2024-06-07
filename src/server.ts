@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import ytdl from 'ytdl-core';
 import axios from 'axios';
-import { load } from 'cheerio';
+import cheerio from 'cheerio';
 import ffmpeg from 'fluent-ffmpeg';
 import { PassThrough } from 'stream';
 
@@ -11,15 +11,26 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// Verificar la disponibilidad de ffmpeg
+ffmpeg.getAvailableFormats((err, formats) => {
+  if (err) {
+    console.error('Error comprobando ffmpeg:', err.message);
+  } else {
+    console.log('ffmpeg está disponible con los siguientes formatos:', formats);
+  }
+});
+
 app.get('/', (req: Request, res: Response) => {
+  console.log('GET /');
   res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 const extractVideoIdAndClipTimes = async (clipUrl: string): Promise<{ videoId: string, startTime: number, endTime: number } | null> => {
+  console.log('Extracting video ID and clip times from:', clipUrl);
   try {
     const response = await axios.get(clipUrl);
     const html = response.data;
-    const $ = load(html);
+    const $ = cheerio.load(html);
 
     const scriptTags = $('script');
     let videoId: string | null = null;
@@ -46,6 +57,7 @@ const extractVideoIdAndClipTimes = async (clipUrl: string): Promise<{ videoId: s
       return { videoId, startTime, endTime };
     }
 
+    console.log('Failed to extract video ID and clip times');
     return null;
   } catch (error) {
     console.error(`Error al extraer el ID del video y tiempos del clip: ${error}`);
@@ -55,9 +67,11 @@ const extractVideoIdAndClipTimes = async (clipUrl: string): Promise<{ videoId: s
 
 app.post('/download', async (req: Request, res: Response) => {
   const { url }: { url: string } = req.body;
+  console.log('POST /download', url);
 
   const clipInfo = await extractVideoIdAndClipTimes(url);
   if (!clipInfo) {
+    console.log('Clip no encontrado');
     return res.status(400).json({ error: 'Clip no encontrado' });
   }
 
@@ -66,6 +80,11 @@ app.post('/download', async (req: Request, res: Response) => {
 
   const videoStream = ytdl(videoUrl, { quality: 'highest' });
   const ffmpegStream = new PassThrough();
+
+  console.log('Iniciando ffmpeg con los siguientes parámetros:', {
+    startTime: clipInfo.startTime,
+    duration: clipInfo.endTime - clipInfo.startTime,
+  });
 
   ffmpeg(videoStream)
     .on('start', commandLine => {
