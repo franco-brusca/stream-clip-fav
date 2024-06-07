@@ -16,11 +16,11 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const ytdl_core_1 = __importDefault(require("ytdl-core"));
 const axios_1 = __importDefault(require("axios"));
-const cheerio_1 = __importDefault(require("cheerio"));
+const cheerio_1 = require("cheerio");
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const stream_1 = require("stream");
 const app = (0, express_1.default)();
-const port = 3000;
+const port = process.env.PORT || 3000;
 app.use(express_1.default.json());
 app.get('/', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '..', 'index.html'));
@@ -29,31 +29,26 @@ const extractVideoIdAndClipTimes = (clipUrl) => __awaiter(void 0, void 0, void 0
     try {
         const response = yield axios_1.default.get(clipUrl);
         const html = response.data;
-        const $ = cheerio_1.default.load(html);
+        const $ = (0, cheerio_1.load)(html);
         const scriptTags = $('script');
         let videoId = null;
         let startTime = null;
         let endTime = null;
-        for (let i = 0; i < scriptTags.length; i++) {
-            const scriptTag = scriptTags[i];
-            const scriptContent = $(scriptTag).html();
-            if (scriptContent && scriptContent.includes('videoId')) {
+        scriptTags.each((i, script) => {
+            const scriptContent = $(script).html();
+            if (scriptContent && scriptContent.includes('"clipConfig"')) {
                 const videoIdMatch = scriptContent.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
-                if (videoIdMatch) {
+                const clipConfigMatch = scriptContent.match(/"clipConfig":\{"postId":"([a-zA-Z0-9_-]+)","startTimeMs":"(\d+)","endTimeMs":"(\d+)"\}/);
+                if (videoIdMatch && clipConfigMatch) {
                     videoId = videoIdMatch[1];
-                }
-                const startTimeMatch = scriptContent.match(/"startTime":(\d+)/);
-                if (startTimeMatch) {
-                    startTime = parseInt(startTimeMatch[1], 10);
-                }
-                const endTimeMatch = scriptContent.match(/"endTime":(\d+)/);
-                if (endTimeMatch) {
-                    endTime = parseInt(endTimeMatch[1], 10);
-                }
-                if (videoId && startTime !== null && endTime !== null) {
-                    return { videoId, startTime, endTime };
+                    startTime = parseInt(clipConfigMatch[2], 10) / 1000;
+                    endTime = parseInt(clipConfigMatch[3], 10) / 1000;
+                    console.log(`Extracted videoId: ${videoId}, startTime: ${startTime}, endTime: ${endTime}`);
                 }
             }
+        });
+        if (videoId && startTime !== null && endTime !== null) {
+            return { videoId, startTime, endTime };
         }
         return null;
     }
@@ -64,26 +59,34 @@ const extractVideoIdAndClipTimes = (clipUrl) => __awaiter(void 0, void 0, void 0
 });
 app.post('/download', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { url } = req.body;
-    const clipIdMatch = url.match(/(?:clip\/)([a-zA-Z0-9_-]+)/);
-    if (clipIdMatch) {
-        const clipInfo = yield extractVideoIdAndClipTimes(url);
-        if (!clipInfo) {
-            return res.status(400).json({ error: 'Clip no encontrado' });
-        }
-        const videoUrl = `https://www.youtube.com/watch?v=${clipInfo.videoId}`;
-        const videoStream = (0, ytdl_core_1.default)(videoUrl, { quality: 'highest', begin: `${clipInfo.startTime}s` });
-        const ffmpegStream = new stream_1.PassThrough();
-        (0, fluent_ffmpeg_1.default)(videoStream)
-            .setStartTime(clipInfo.startTime)
-            .setDuration(clipInfo.endTime - clipInfo.startTime)
-            .format('mp4')
-            .pipe(ffmpegStream);
-        res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
-        ffmpegStream.pipe(res);
+    const clipInfo = yield extractVideoIdAndClipTimes(url);
+    if (!clipInfo) {
+        return res.status(400).json({ error: 'Clip no encontrado' });
     }
-    else {
-        res.status(400).json({ error: 'URL de clip no válida' });
-    }
+    const videoUrl = `https://www.youtube.com/watch?v=${clipInfo.videoId}`;
+    console.log(`Video URL: ${videoUrl}`);
+    const videoStream = (0, ytdl_core_1.default)(videoUrl, { quality: 'highest' });
+    const ffmpegStream = new stream_1.PassThrough();
+    (0, fluent_ffmpeg_1.default)(videoStream)
+        .on('start', commandLine => {
+        console.log(`FFmpeg command: ${commandLine}`);
+    })
+        .on('error', (err, stdout, stderr) => {
+        console.error(`FFmpeg error: ${err.message}`);
+        console.error(`FFmpeg stdout: ${stdout}`);
+        console.error(`FFmpeg stderr: ${stderr}`);
+        res.status(500).json({ error: 'Error al procesar el video' });
+    })
+        .on('end', () => {
+        console.log('FFmpeg processing finished');
+    })
+        .setStartTime(clipInfo.startTime)
+        .setDuration(clipInfo.endTime - clipInfo.startTime)
+        .format('mpegts')
+        .pipe(ffmpegStream);
+    res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
+    res.contentType('video/mp4');
+    ffmpegStream.pipe(res);
 }));
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);
