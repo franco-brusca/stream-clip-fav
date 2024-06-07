@@ -11,7 +11,6 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Verificar la disponibilidad de ffmpeg
 ffmpeg.getAvailableFormats((err, formats) => {
   if (err) {
     console.error('Error comprobando ffmpeg:', err.message);

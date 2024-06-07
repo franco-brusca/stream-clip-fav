@@ -16,20 +16,31 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const ytdl_core_1 = __importDefault(require("ytdl-core"));
 const axios_1 = __importDefault(require("axios"));
-const cheerio_1 = require("cheerio");
+const cheerio_1 = __importDefault(require("cheerio"));
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const stream_1 = require("stream");
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 app.use(express_1.default.json());
+// Verificar la disponibilidad de ffmpeg
+fluent_ffmpeg_1.default.getAvailableFormats((err, formats) => {
+    if (err) {
+        console.error('Error comprobando ffmpeg:', err.message);
+    }
+    else {
+        console.log('ffmpeg está disponible con los siguientes formatos:', formats);
+    }
+});
 app.get('/', (req, res) => {
+    console.log('GET /');
     res.sendFile(path_1.default.join(__dirname, '..', 'index.html'));
 });
 const extractVideoIdAndClipTimes = (clipUrl) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('Extracting video ID and clip times from:', clipUrl);
     try {
         const response = yield axios_1.default.get(clipUrl);
         const html = response.data;
-        const $ = (0, cheerio_1.load)(html);
+        const $ = cheerio_1.default.load(html);
         const scriptTags = $('script');
         let videoId = null;
         let startTime = null;
@@ -50,6 +61,7 @@ const extractVideoIdAndClipTimes = (clipUrl) => __awaiter(void 0, void 0, void 0
         if (videoId && startTime !== null && endTime !== null) {
             return { videoId, startTime, endTime };
         }
+        console.log('Failed to extract video ID and clip times');
         return null;
     }
     catch (error) {
@@ -59,14 +71,20 @@ const extractVideoIdAndClipTimes = (clipUrl) => __awaiter(void 0, void 0, void 0
 });
 app.post('/download', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { url } = req.body;
+    console.log('POST /download', url);
     const clipInfo = yield extractVideoIdAndClipTimes(url);
     if (!clipInfo) {
+        console.log('Clip no encontrado');
         return res.status(400).json({ error: 'Clip no encontrado' });
     }
     const videoUrl = `https://www.youtube.com/watch?v=${clipInfo.videoId}`;
     console.log(`Video URL: ${videoUrl}`);
     const videoStream = (0, ytdl_core_1.default)(videoUrl, { quality: 'highest' });
     const ffmpegStream = new stream_1.PassThrough();
+    console.log('Iniciando ffmpeg con los siguientes parámetros:', {
+        startTime: clipInfo.startTime,
+        duration: clipInfo.endTime - clipInfo.startTime,
+    });
     (0, fluent_ffmpeg_1.default)(videoStream)
         .on('start', commandLine => {
         console.log(`FFmpeg command: ${commandLine}`);
