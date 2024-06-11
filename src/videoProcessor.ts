@@ -26,6 +26,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       .setDuration(clipInfo.endTime-clipInfo.startTime)
       .outputOptions('-c:v libx264')
       .outputOptions('-preset ultrafast')
+      .outputOptions('-threads 1') // Limitar a un hilo
       .output(clippedVideoTempFilePath)
       .on('start', commandLine => {
         console.log(`FFmpeg video command: ${commandLine}`);
