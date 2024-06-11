@@ -29,6 +29,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       .outputOptions('-c:v libx264')
       .outputOptions('-preset ultrafast')
       .outputOptions('-tune zerolatency')
+      .outputOptions('-loglevel verbose')
       // .outputOptions('-crf 28')
       // .outputOptions('-maxrate 500k')
       // .outputOptions('-bufsize 1000k')
