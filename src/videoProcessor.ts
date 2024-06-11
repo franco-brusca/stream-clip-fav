@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path'; // Asegurarse de que esto esté importado
 import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { filter } from 'cheerio/lib/api/traversing';
 
 export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { videoId: string, startTime: number, endTime: number }, videoQuality: string, res: any): Promise<void> => {
   const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
@@ -40,7 +39,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       })
       .on('end', () => {
         console.log('Descarga y recorte de video completados');
-        resolve()// Procesar el archivo temporal como sea necesario
+        resolve()
       })
       .on('error', (err, stdout, stderr) => {
         console.error(`FFmpeg video error: ${err.message}`);

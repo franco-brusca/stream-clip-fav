@@ -49,7 +49,7 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
         })
             .on('end', () => {
             console.log('Descarga y recorte de video completados');
-            resolve(); // Procesar el archivo temporal como sea necesario
+            resolve();
         })
             .on('error', (err, stdout, stderr) => {
             console.error(`FFmpeg video error: ${err.message}`);
