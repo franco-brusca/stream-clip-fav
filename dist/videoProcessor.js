@@ -26,7 +26,8 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
     // Example of choosing a video format.
     let info = yield ytdl_core_1.default.getInfo(clipInfo.videoId);
     let formats = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
-    let format = ytdl_core_1.default.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
+    let format = ytdl_core_1.default.chooseFormat(formats, { quality: "highestvideo" });
+    //let format = ytdl.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
     console.log(format);
     console.log(clipInfo);
     const downloadAndClipVideo = new Promise((resolve, reject) => {
