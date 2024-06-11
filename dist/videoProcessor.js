@@ -26,7 +26,7 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
     // Example of choosing a video format.
     let info = yield ytdl_core_1.default.getInfo(clipInfo.videoId);
     let formats = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
-    let format = ytdl_core_1.default.chooseFormat(formats, { quality: 'highestvideo' });
+    let format = ytdl_core_1.default.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
     console.log(format);
     console.log(clipInfo);
     const downloadAndClipVideo = new Promise((resolve, reject) => {
@@ -37,10 +37,10 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
             .outputOptions('-c:v libx264')
             .outputOptions('-preset ultrafast')
             .outputOptions('-tune zerolatency')
-            .outputOptions('-crf 28')
-            .outputOptions('-maxrate 500k')
-            .outputOptions('-bufsize 1000k')
-            .outputOptions('-vf scale=320:240')
+            // .outputOptions('-crf 28')
+            // .outputOptions('-maxrate 500k')
+            // .outputOptions('-bufsize 1000k')
+            // .outputOptions('-vf scale=320:240')
             .output(clippedVideoTempFilePath)
             .on('start', commandLine => {
             console.log(`FFmpeg video command: ${commandLine}`);

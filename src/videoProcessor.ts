@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path'; // Asegurarse de que esto esté importado
 import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
+import { filter } from 'cheerio/lib/api/traversing';
 
 export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { videoId: string, startTime: number, endTime: number }, videoQuality: string, res: any): Promise<void> => {
   const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
@@ -14,7 +15,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
   // Example of choosing a video format.
   let info = await ytdl.getInfo(clipInfo.videoId);
   let formats = ytdl.filterFormats(info.formats, 'videoonly');
-  let format = ytdl.chooseFormat(formats, { quality: 'highestvideo' });
+  let format = ytdl.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
   console.log(format);
   console.log(clipInfo)
 
@@ -27,10 +28,10 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       .outputOptions('-c:v libx264')
       .outputOptions('-preset ultrafast')
       .outputOptions('-tune zerolatency')
-      .outputOptions('-crf 28')
-      .outputOptions('-maxrate 500k')
-      .outputOptions('-bufsize 1000k')
-      .outputOptions('-vf scale=320:240')
+      // .outputOptions('-crf 28')
+      // .outputOptions('-maxrate 500k')
+      // .outputOptions('-bufsize 1000k')
+      // .outputOptions('-vf scale=320:240')
       .output(clippedVideoTempFilePath)
       .on('start', commandLine => {
         console.log(`FFmpeg video command: ${commandLine}`);
