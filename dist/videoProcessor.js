@@ -19,9 +19,6 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path")); // Asegurarse de que esto esté importado
 const os_1 = __importDefault(require("os"));
 const uuid_1 = require("uuid");
-const secondsToBytes = (ms, bitrate) => {
-    return Math.floor((ms) * (bitrate / (8 * 1000))); // convertimos bits a bytes
-};
 const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awaiter(void 0, void 0, void 0, function* () {
     const clippedVideoTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}-video.mp4`);
     const clippedAudioTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}-audio.mp4`);
@@ -31,13 +28,9 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
     let formats = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
     let format = ytdl_core_1.default.chooseFormat(formats, { quality: 'highestvideo' });
     console.log(format);
-    const startBytes = secondsToBytes(clipInfo.startTime, format.bitrate);
-    const endBytes = secondsToBytes(clipInfo.endTime, format.bitrate);
     console.log(clipInfo);
-    console.log(startBytes, endBytes);
     const downloadAndClipVideo = new Promise((resolve, reject) => {
         console.log('Iniciando descarga de video...');
-        //const stream = ytdl(videoUrl, { quality: format.itag  })
         (0, fluent_ffmpeg_1.default)(format.url)
             .setStartTime(clipInfo.startTime)
             .setDuration(clipInfo.endTime - clipInfo.startTime)
@@ -105,10 +98,8 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
         })
             .on('end', () => {
             console.log('Combinación final completada con éxito');
-            //fs.unlink(videoTempFilePath, () => {});
-            //fs.unlink(audioTempFilePath, () => {});
-            //fs.unlink(clippedVideoTempFilePath, () => {});
-            //fs.unlink(clippedAudioTempFilePath, () => {});
+            fs_1.default.unlink(clippedVideoTempFilePath, () => { });
+            fs_1.default.unlink(clippedAudioTempFilePath, () => { });
             // Leer el archivo de salida y enviarlo al cliente
             res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
             res.contentType('video/mp4');
