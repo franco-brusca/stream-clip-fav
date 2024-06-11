@@ -4,11 +4,6 @@ import fs from 'fs';
 import path from 'path'; // Asegurarse de que esto esté importado
 import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { end } from 'cheerio/lib/api/traversing';
-
-const secondsToBytes = (ms, bitrate) => {
-  return Math.floor((ms) * (bitrate / (8 * 1000))); // convertimos bits a bytes
-};
 
 export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { videoId: string, startTime: number, endTime: number }, videoQuality: string, res: any): Promise<void> => {
   const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
@@ -21,17 +16,10 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
   let formats = ytdl.filterFormats(info.formats, 'videoonly');
   let format = ytdl.chooseFormat(formats, { quality: 'highestvideo' });
   console.log(format);
-
-
-  const startBytes = secondsToBytes(clipInfo.startTime, format.bitrate);
-
-  const endBytes = secondsToBytes(clipInfo.endTime, format.bitrate)
   console.log(clipInfo)
-  console.log(startBytes, endBytes)
 
   const downloadAndClipVideo = new Promise<void>((resolve, reject) => {
     console.log('Iniciando descarga de video...');
-    //const stream = ytdl(videoUrl, { quality: format.itag  })
 
     ffmpeg(format.url)
       .setStartTime(clipInfo.startTime)
@@ -105,10 +93,8 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       })
       .on('end', () => {
         console.log('Combinación final completada con éxito');
-        //fs.unlink(videoTempFilePath, () => {});
-        //fs.unlink(audioTempFilePath, () => {});
-        //fs.unlink(clippedVideoTempFilePath, () => {});
-        //fs.unlink(clippedAudioTempFilePath, () => {});
+        fs.unlink(clippedVideoTempFilePath, () => {});
+        fs.unlink(clippedAudioTempFilePath, () => {});
 
         // Leer el archivo de salida y enviarlo al cliente
         res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
