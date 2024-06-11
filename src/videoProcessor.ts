@@ -26,6 +26,11 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       .setDuration(clipInfo.endTime-clipInfo.startTime)
       .outputOptions('-c:v libx264')
       .outputOptions('-preset ultrafast')
+      .outputOptions('-tune zerolatency')
+      .outputOptions('-crf 28')
+      .outputOptions('-maxrate 500k')
+      .outputOptions('-bufsize 1000k')
+      .outputOptions('-vf scale=320:240')
       .output(clippedVideoTempFilePath)
       .on('start', commandLine => {
         console.log(`FFmpeg video command: ${commandLine}`);
