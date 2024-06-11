@@ -19,16 +19,26 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path")); // Asegurarse de que esto esté importado
 const os_1 = __importDefault(require("os"));
 const uuid_1 = require("uuid");
+const secondsToBytes = (ms, bitrate) => {
+    return Math.floor((ms) * (bitrate / (8 * 1000))); // convertimos bits a bytes
+};
 const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Crear archivos temporales para la entrada
-    const videoTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}.mp4`);
-    const audioTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}.mp4`);
     const clippedVideoTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}-video.mp4`);
     const clippedAudioTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}-audio.mp4`);
-    console.log(`Archivos temporales creados: video: ${videoTempFilePath}, audio: ${audioTempFilePath}`);
+    console.log(`Archivos temporales creados: video: ${clippedVideoTempFilePath}, audio: ${clippedAudioTempFilePath}`);
+    // Example of choosing a video format.
+    let info = yield ytdl_core_1.default.getInfo(clipInfo.videoId);
+    let formats = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
+    let format = ytdl_core_1.default.chooseFormat(formats, { quality: 'highestvideo' });
+    console.log(format);
+    const startBytes = secondsToBytes(clipInfo.startTime, format.bitrate);
+    const endBytes = secondsToBytes(clipInfo.endTime, format.bitrate);
+    console.log(clipInfo);
+    console.log(startBytes, endBytes);
     const downloadAndClipVideo = new Promise((resolve, reject) => {
-        console.log('Iniciando descarga y recorte de video...');
-        (0, fluent_ffmpeg_1.default)((0, ytdl_core_1.default)(videoUrl, { quality: '18' }))
+        console.log('Iniciando descarga de video...');
+        //const stream = ytdl(videoUrl, { quality: format.itag  })
+        (0, fluent_ffmpeg_1.default)(format.url)
             .setStartTime(clipInfo.startTime)
             .setDuration(clipInfo.endTime - clipInfo.startTime)
             .outputOptions('-c:v libx264')
@@ -39,13 +49,12 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
         })
             .on('end', () => {
             console.log('Descarga y recorte de video completados');
-            resolve();
+            resolve(); // Procesar el archivo temporal como sea necesario
         })
             .on('error', (err, stdout, stderr) => {
             console.error(`FFmpeg video error: ${err.message}`);
             console.error(`FFmpeg video stdout: ${stdout}`);
             console.error(`FFmpeg video stderr: ${stderr}`);
-            reject(err);
         })
             .run();
     });
@@ -90,18 +99,16 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
             if (!res.headersSent) {
                 res.status(500).json({ error: 'Error al procesar el video final' });
             }
-            fs_1.default.unlink(videoTempFilePath, () => { });
-            fs_1.default.unlink(audioTempFilePath, () => { });
             fs_1.default.unlink(clippedVideoTempFilePath, () => { });
             fs_1.default.unlink(clippedAudioTempFilePath, () => { });
             fs_1.default.unlink(outputTempFilePath, () => { });
         })
             .on('end', () => {
             console.log('Combinación final completada con éxito');
-            fs_1.default.unlink(videoTempFilePath, () => { });
-            fs_1.default.unlink(audioTempFilePath, () => { });
-            fs_1.default.unlink(clippedVideoTempFilePath, () => { });
-            fs_1.default.unlink(clippedAudioTempFilePath, () => { });
+            //fs.unlink(videoTempFilePath, () => {});
+            //fs.unlink(audioTempFilePath, () => {});
+            //fs.unlink(clippedVideoTempFilePath, () => {});
+            //fs.unlink(clippedAudioTempFilePath, () => {});
             // Leer el archivo de salida y enviarlo al cliente
             res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
             res.contentType('video/mp4');

@@ -4,21 +4,38 @@ import fs from 'fs';
 import path from 'path'; // Asegurarse de que esto esté importado
 import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
+import { end } from 'cheerio/lib/api/traversing';
+
+const secondsToBytes = (ms, bitrate) => {
+  return Math.floor((ms) * (bitrate / (8 * 1000))); // convertimos bits a bytes
+};
 
 export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { videoId: string, startTime: number, endTime: number }, videoQuality: string, res: any): Promise<void> => {
-  // Crear archivos temporales para la entrada
-  const videoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}.mp4`);
-  const audioTempFilePath = path.join(os.tmpdir(), `${uuidv4()}.mp4`);
   const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
   const clippedAudioTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-audio.mp4`);
 
-  console.log(`Archivos temporales creados: video: ${videoTempFilePath}, audio: ${audioTempFilePath}`);
+  console.log(`Archivos temporales creados: video: ${clippedVideoTempFilePath}, audio: ${clippedAudioTempFilePath}`);
+
+  // Example of choosing a video format.
+  let info = await ytdl.getInfo(clipInfo.videoId);
+  let formats = ytdl.filterFormats(info.formats, 'videoonly');
+  let format = ytdl.chooseFormat(formats, { quality: 'highestvideo' });
+  console.log(format);
+
+
+  const startBytes = secondsToBytes(clipInfo.startTime, format.bitrate);
+
+  const endBytes = secondsToBytes(clipInfo.endTime, format.bitrate)
+  console.log(clipInfo)
+  console.log(startBytes, endBytes)
 
   const downloadAndClipVideo = new Promise<void>((resolve, reject) => {
-    console.log('Iniciando descarga y recorte de video...');
-    ffmpeg(ytdl(videoUrl, { quality: '18' }))
+    console.log('Iniciando descarga de video...');
+    //const stream = ytdl(videoUrl, { quality: format.itag  })
+
+    ffmpeg(format.url)
       .setStartTime(clipInfo.startTime)
-      .setDuration(clipInfo.endTime - clipInfo.startTime)
+      .setDuration(clipInfo.endTime-clipInfo.startTime)
       .outputOptions('-c:v libx264')
       .outputOptions('-preset ultrafast')
       .output(clippedVideoTempFilePath)
@@ -27,16 +44,16 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       })
       .on('end', () => {
         console.log('Descarga y recorte de video completados');
-        resolve();
+        resolve()// Procesar el archivo temporal como sea necesario
       })
       .on('error', (err, stdout, stderr) => {
         console.error(`FFmpeg video error: ${err.message}`);
         console.error(`FFmpeg video stdout: ${stdout}`);
         console.error(`FFmpeg video stderr: ${stderr}`);
-        reject(err);
       })
       .run();
   });
+
 
   const downloadAndClipAudio = new Promise<void>((resolve, reject) => {
     console.log('Iniciando descarga y recorte de audio...');
@@ -82,18 +99,16 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
         if (!res.headersSent) {
           res.status(500).json({ error: 'Error al procesar el video final' });
         }
-        fs.unlink(videoTempFilePath, () => {});
-        fs.unlink(audioTempFilePath, () => {});
-        fs.unlink(clippedVideoTempFilePath, () => {});
-        fs.unlink(clippedAudioTempFilePath, () => {});
-        fs.unlink(outputTempFilePath, () => {});
+        fs.unlink(clippedVideoTempFilePath, () => { });
+        fs.unlink(clippedAudioTempFilePath, () => { });
+        fs.unlink(outputTempFilePath, () => { });
       })
       .on('end', () => {
         console.log('Combinación final completada con éxito');
-        fs.unlink(videoTempFilePath, () => {});
-        fs.unlink(audioTempFilePath, () => {});
-        fs.unlink(clippedVideoTempFilePath, () => {});
-        fs.unlink(clippedAudioTempFilePath, () => {});
+        //fs.unlink(videoTempFilePath, () => {});
+        //fs.unlink(audioTempFilePath, () => {});
+        //fs.unlink(clippedVideoTempFilePath, () => {});
+        //fs.unlink(clippedAudioTempFilePath, () => {});
 
         // Leer el archivo de salida y enviarlo al cliente
         res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
@@ -101,7 +116,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
         const outputStream = fs.createReadStream(outputTempFilePath);
         outputStream.pipe(res).on('finish', () => {
           console.log('Stream finished');
-          fs.unlink(outputTempFilePath, () => {});
+          fs.unlink(outputTempFilePath, () => { });
         });
       })
       .videoCodec('libx264')
