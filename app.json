@@ -1,0 +1,6 @@
+{
+    "scripts": {
+      "postdeploy": "npm run clear-cache"
+    }
+  }
+  
