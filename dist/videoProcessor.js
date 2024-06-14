@@ -26,7 +26,7 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
         console.log(`Archivos temporales creados: video: ${clippedVideoTempFilePath}, audio: ${clippedAudioTempFilePath}`);
         // Example of choosing a video format.
         let info = yield ytdl_core_1.default.getInfo(clipInfo.videoId);
-        let formats = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
+        let formats = ytdl_core_1.default.filterFormats(info.formats, format => format.container === 'mp4');
         let format = ytdl_core_1.default.chooseFormat(formats, { quality: "highestvideo" });
         //let format = ytdl.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
         console.log(format);

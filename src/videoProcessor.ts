@@ -16,7 +16,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
 
     // Example of choosing a video format.
     let info = await ytdl.getInfo(clipInfo.videoId);
-    let formats = ytdl.filterFormats(info.formats, 'videoonly');
+    let formats = ytdl.filterFormats(info.formats, format => format.container === 'mp4');
     let format = ytdl.chooseFormat(formats, { quality: "highestvideo" });
     //let format = ytdl.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
     console.log(format);
