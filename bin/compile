@@ -12,4 +12,9 @@ mv ffmpeg-git-*/ffmpeg /app/vendor/ffmpeg/
 mv ffmpeg-git-*/ffprobe /app/vendor/ffmpeg/
 mv ffmpeg-git-*/qt-faststart /app/vendor/ffmpeg/
 
+# Hacer los binarios ejecutables
+chmod +x /app/vendor/ffmpeg/ffmpeg
+chmod +x /app/vendor/ffmpeg/ffprobe
+chmod +x /app/vendor/ffmpeg/qt-faststart
+
 echo "ffmpeg installation completed"
