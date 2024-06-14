@@ -9,8 +9,8 @@
     "clear-cache": "npm cache clean --force"
   },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "node": "20.x",
+    "npm": "9.x"
   },
   "dependencies": {
     "axios": "^0.21.1",
