@@ -17,4 +17,8 @@ chmod +x /app/vendor/ffmpeg/ffmpeg
 chmod +x /app/vendor/ffmpeg/ffprobe
 chmod +x /app/vendor/ffmpeg/qt-faststart
 
+# Verificar ubicación de los archivos
+echo "Contents of /app/vendor/ffmpeg:"
+ls -l /app/vendor/ffmpeg
+
 echo "ffmpeg installation completed"
