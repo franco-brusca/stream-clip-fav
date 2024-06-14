@@ -2,11 +2,15 @@ import express, { Request, Response } from 'express';
 import path from 'path'; // Asegurar que path está importado
 import { extractVideoIdAndClipTimes } from './clipExtractor';
 import { downloadAndProcessVideo } from './videoProcessor';
+import cors from 'cors';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// Configuración de CORS
+app.use(cors());
 
 app.get('/', (req: Request, res: Response) => {
   console.log('GET /');
