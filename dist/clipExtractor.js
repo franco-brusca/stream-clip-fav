@@ -55,7 +55,7 @@ const extractVideoIdAndClipTimes = (clipUrl) => __awaiter(void 0, void 0, void 0
             console.error('Request data:', error.request);
         }
         else {
-            console.error('Error message:', error.message);
+            console.error('Error messages:', error.message);
         }
         console.error('Error config:', error.config);
         return null;

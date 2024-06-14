@@ -44,7 +44,7 @@ export const extractVideoIdAndClipTimes = async (clipUrl: string): Promise<{ vid
     } else if (error.request) {
       console.error('Request data:', error.request);
     } else {
-      console.error('Error message:', error.message);
+      console.error('Error messages:', error.message);
     }
     console.error('Error config:', error.config);
     return null;
