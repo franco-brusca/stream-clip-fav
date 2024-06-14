@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Mensaje de inicio del script
+echo "Starting setup_ffmpeg script..."
+
 # Descargar ffmpeg
 echo "Downloading ffmpeg..."
 FFMPEG_URL="https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz"
@@ -21,4 +24,5 @@ chmod +x /app/bin/qt-faststart
 echo "Contents of /app/bin:"
 ls -l /app/bin
 
+# Mensaje de finalización del script
 echo "ffmpeg installation completed"
