@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import path from 'path'; // Asegurar que path está importado
+import path from 'path'; 
 import { extractVideoIdAndClipTimes } from './clipExtractor';
 import { downloadAndProcessVideo } from './videoProcessor';
 import cors from 'cors';

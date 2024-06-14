@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const path_1 = __importDefault(require("path")); // Asegurar que path está importado
+const path_1 = __importDefault(require("path"));
 const clipExtractor_1 = require("./clipExtractor");
 const videoProcessor_1 = require("./videoProcessor");
 const cors_1 = __importDefault(require("cors"));
