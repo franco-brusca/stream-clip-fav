@@ -6,19 +6,19 @@ echo "Downloading ffmpeg..."
 FFMPEG_URL="https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz"
 curl -L $FFMPEG_URL | tar xJ
 
-# Mover binarios a /app/vendor/ffmpeg para que estén en el PATH
-mkdir -p /app/vendor/ffmpeg
-mv ffmpeg-git-*/ffmpeg /app/vendor/ffmpeg/
-mv ffmpeg-git-*/ffprobe /app/vendor/ffmpeg/
-mv ffmpeg-git-*/qt-faststart /app/vendor/ffmpeg/
+# Mover binarios a /app/bin para que estén en el PATH
+mkdir -p /app/bin
+mv ffmpeg-git-*/ffmpeg /app/bin/
+mv ffmpeg-git-*/ffprobe /app/bin/
+mv ffmpeg-git-*/qt-faststart /app/bin/
 
 # Hacer los binarios ejecutables
-chmod +x /app/vendor/ffmpeg/ffmpeg
-chmod +x /app/vendor/ffmpeg/ffprobe
-chmod +x /app/vendor/ffmpeg/qt-faststart
+chmod +x /app/bin/ffmpeg
+chmod +x /app/bin/ffprobe
+chmod +x /app/bin/qt-faststart
 
 # Verificar ubicación de los archivos
-echo "Contents of /app/vendor/ffmpeg:"
-ls -l /app/vendor/ffmpeg
+echo "Contents of /app/bin:"
+ls -l /app/bin
 
 echo "ffmpeg installation completed"

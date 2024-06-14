@@ -1,2 +1,2 @@
 release: ./bin/compile
-web: PATH=/app/vendor/ffmpeg:$PATH npm start
+web: PATH=/app/bin:$PATH npm start
