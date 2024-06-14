@@ -1,1 +1,2 @@
-web: ./bin/setup_ffmpeg && PATH=/app/bin:$PATH npm start
+release: ./bin/compile
+web: PATH=/app/bin:$PATH npm start
