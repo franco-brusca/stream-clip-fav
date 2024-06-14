@@ -19,7 +19,7 @@
     "express": "^4.17.1",
     "fluent-ffmpeg": "^2.1.2",
     "uuid": "^9.0.1",
-    "ytdl-core": "^4.9.1"
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
