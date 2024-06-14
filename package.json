@@ -18,6 +18,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "fluent-ffmpeg": "^2.1.2",
+    "miniget": "^4.2.3",
     "uuid": "^9.0.1",
     "ytdl-core": "^4.11.5"
   },
