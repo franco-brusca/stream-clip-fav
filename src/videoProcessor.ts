@@ -6,25 +6,30 @@ import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 
 export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { videoId: string, startTime: number, endTime: number }, videoQuality: string, res: any): Promise<void> => {
-  const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
-  const clippedAudioTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-audio.mp4`);
+    try {
+      
+    
+    const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
+    const clippedAudioTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-audio.mp4`);
 
-  console.log(`Archivos temporales creados: video: ${clippedVideoTempFilePath}, audio: ${clippedAudioTempFilePath}`);
+    console.log(`Archivos temporales creados: video: ${clippedVideoTempFilePath}, audio: ${clippedAudioTempFilePath}`);
 
-  // Example of choosing a video format.
-  let info = await ytdl.getInfo(clipInfo.videoId);
-  let formats = ytdl.filterFormats(info.formats, 'videoonly');
-  let format = ytdl.chooseFormat(formats, {quality:"highestvideo"});
-  //let format = ytdl.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
-  console.log(format);
-  console.log(clipInfo)
+    // Example of choosing a video format.
+    let info = await ytdl.getInfo(clipInfo.videoId);
+    let formats = ytdl.filterFormats(info.formats, 'videoonly');
+    let format = ytdl.chooseFormat(formats, { quality: "highestvideo" });
+    //let format = ytdl.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
+    console.log(format);
+    console.log(clipInfo)
+ 
+
 
   const downloadAndClipVideo = new Promise<void>((resolve, reject) => {
     console.log('Iniciando descarga de video...');
 
     ffmpeg(format.url)
       .setStartTime(clipInfo.startTime)
-      .setDuration(clipInfo.endTime-clipInfo.startTime)
+      .setDuration(clipInfo.endTime - clipInfo.startTime)
       .outputOptions('-c:v libx264')
       .outputOptions('-preset ultrafast')
       .outputOptions('-tune zerolatency')
@@ -100,8 +105,8 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       })
       .on('end', () => {
         console.log('Combinación final completada con éxito');
-        fs.unlink(clippedVideoTempFilePath, () => {});
-        fs.unlink(clippedAudioTempFilePath, () => {});
+        fs.unlink(clippedVideoTempFilePath, () => { });
+        fs.unlink(clippedAudioTempFilePath, () => { });
 
         // Leer el archivo de salida y enviarlo al cliente
         res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
@@ -120,5 +125,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
   } catch (error) {
     console.error('Error durante la descarga y recorte:', error);
     res.status(500).json({ error: 'Error durante la descarga y recorte de video/audio' });
+  }} catch (error) {
+    console.error('Error en downloadvideoAndProcess:', error);
   }
 };
