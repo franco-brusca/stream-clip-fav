@@ -5,8 +5,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "build": "tsc",
-    "heroku-postbuild": "npm run build",
-    "postdeploy": "./bin/compile"
+    "heroku-postbuild": "npm run build"
   },
   "engines": {
     "node": ">=14.0.0",
