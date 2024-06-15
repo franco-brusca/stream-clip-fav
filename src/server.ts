@@ -19,7 +19,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.post('/download', async (req, res) => {
-  const { url, quality = 'lowestvideo' }: { url: string, quality: string } = req.body;
+  const { url, quality = 'highest' }: { url: string, quality: string } = req.body;
   console.log('POST /download', url);
 
   const clipInfo = await extractVideoIdAndClipTimes(url);
