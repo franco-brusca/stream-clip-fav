@@ -1,50 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Clip Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 300px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 200px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 5px 10px;
+        }
+
+        .progress {
+            margin-top: 20px;
+        }
+
+    </style>
 </head>
+
 <body>
-    <h1>YouTube Clip Downloader</h1>
-    <form id="downloadForm">
+    <div class="container">
+        <h1>YouTube Clip Downloader</h1>
         <label for="url">YouTube Clip URL:</label>
-        <input type="text" id="url" name="url" required>
-        <button type="submit">Download</button>
-    </form>
+        <input type="text" id="url" name="url">
+        <button id="downloadBtn">Download</button>
+        <div class="progress" id="progress"></div>
+        <div id="downloadLink"></div>
+    </div>
+
     <script>
-        document.getElementById('downloadForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+        document.getElementById('downloadBtn').addEventListener('click', function () {
             const url = document.getElementById('url').value;
-            
-            fetch('/download', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ url })
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.blob();
-                } else {
-                    return response.json().then(error => { throw new Error(error.error); });
-                }
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = 'clip.mp4';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(error => {
-                alert('Error: ' + error.message);
-            });
+            const progress = document.getElementById('progress');
+            const downloadLink = document.getElementById('downloadLink');
+
+            if (url.trim() === "") {
+                alert("Please enter a YouTube URL.");
+                return;
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/download", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+            xhr.onloadstart = function () {
+                //"Starting download...";
+            };
+
+            xhr.onprogress = function (event) {
+                const receivedData = event.target.responseText;
+                processResponse(receivedData, progress, downloadLink);
+            };
+
+            xhr.send(JSON.stringify({ url: url }));
         });
+
+        function processResponse(receivedData, progressElement, downloadLinkElement) {
+            // Split the received data by lines to handle each update separately
+            const lines = receivedData.split('\n');
+            lines.forEach(line => {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.substring(6));
+                        if (data.progress) {
+                            progressElement.textContent = `Progress: ${data.progress}`;
+                        } else if (data.message === "File ready" && data.file) {
+                            const fileUrl = data.file;
+                            downloadFile(fileUrl, downloadLinkElement);
+                        }
+                    } catch (e) {
+                        //ignore
+                    }
+                }
+            });
+        }
+
+        function downloadFile(fileUrl, downloadLinkElement) {
+            const xhrDownload = new XMLHttpRequest();
+            xhrDownload.open("POST", "/download-file", true);
+            xhrDownload.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhrDownload.responseType = 'blob';
+
+            xhrDownload.onload = function () {
+                if (xhrDownload.status === 200) {
+                    const url = window.URL.createObjectURL(new Blob([xhrDownload.response]));
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileUrl.split("\\").pop();
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    downloadLinkElement.textContent = "File downloaded successfully!";
+                } else {
+                    downloadLinkElement.textContent = "Error downloading the file.";
+                }
+            };
+
+            xhrDownload.send(JSON.stringify({ file: fileUrl }));
+        }
     </script>
 </body>
+
 </html>

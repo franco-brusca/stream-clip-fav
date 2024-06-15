@@ -16,51 +16,52 @@ exports.downloadAndProcessVideo = void 0;
 const ytdl_core_1 = __importDefault(require("ytdl-core"));
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path")); // Asegurarse de que esto esté importado
+const path_1 = __importDefault(require("path"));
 const os_1 = __importDefault(require("os"));
 const uuid_1 = require("uuid");
-const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awaiter(void 0, void 0, void 0, function* () {
+const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const clippedVideoTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}-video.mp4`);
         const clippedAudioTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}-audio.mp4`);
-        console.log(`Archivos temporales creados: video: ${clippedVideoTempFilePath}, audio: ${clippedAudioTempFilePath}`);
-        // Example of choosing a video format.
-        let info = yield ytdl_core_1.default.getInfo(clipInfo.videoId);
-        let formats = ytdl_core_1.default.filterFormats(info.formats, format => format.container === 'mp4');
-        let format = ytdl_core_1.default.chooseFormat(formats, { quality: "highestvideo" });
-        //let format = ytdl.chooseFormat(formats, { filter: format => format.qualityLabel === '720p' });
-        console.log(format);
-        console.log(clipInfo);
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+        const sendProgress = (message) => {
+            console.log(message);
+            res.write(`data: ${message}\n\n`);
+            res.flush();
+        };
+        sendProgress('Starting video download and processing...');
+        const info = yield ytdl_core_1.default.getInfo(videoUrl);
+        const formats = ytdl_core_1.default.filterFormats(info.formats, format => format.container === 'mp4');
+        const format = ytdl_core_1.default.chooseFormat(formats, { quality: videoQuality });
+        sendProgress('Video info retrieved.');
         const downloadAndClipVideo = new Promise((resolve, reject) => {
-            console.log('Iniciando descarga de video...');
             (0, fluent_ffmpeg_1.default)(format.url)
                 .setStartTime(clipInfo.startTime)
                 .setDuration(clipInfo.endTime - clipInfo.startTime)
                 .outputOptions('-c:v libx264')
                 .outputOptions('-preset ultrafast')
-                .outputOptions('-tune zerolatency')
-                .outputOptions('-loglevel verbose')
-                // .outputOptions('-crf 28')
-                // .outputOptions('-maxrate 500k')
-                // .outputOptions('-bufsize 1000k')
-                // .outputOptions('-vf scale=320:240')
                 .output(clippedVideoTempFilePath)
                 .on('start', commandLine => {
-                console.log(`FFmpeg video command: ${commandLine}`);
+                sendProgress('FFmpeg video command started.');
+            })
+                .on('progress', progress => {
+                if (progress.percent)
+                    sendProgress(`{"progress": "${(progress.percent).toFixed(2)}%"}`);
             })
                 .on('end', () => {
-                console.log('Descarga y recorte de video completados');
+                sendProgress(`{"progress": "100%"}`);
                 resolve();
             })
                 .on('error', (err, stdout, stderr) => {
-                console.error(`FFmpeg video error: ${err.message}`);
-                console.error(`FFmpeg video stdout: ${stdout}`);
-                console.error(`FFmpeg video stderr: ${stderr}`);
+                sendProgress(`FFmpeg video error: ${err.message}`);
+                reject(err);
             })
                 .run();
         });
         const downloadAndClipAudio = new Promise((resolve, reject) => {
-            console.log('Iniciando descarga y recorte de audio...');
             (0, fluent_ffmpeg_1.default)((0, ytdl_core_1.default)(videoUrl, { quality: 'lowestaudio' }))
                 .setStartTime(clipInfo.startTime)
                 .setDuration(clipInfo.endTime - clipInfo.startTime)
@@ -68,68 +69,50 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, res) => __awa
                 .outputOptions('-b:a 128k')
                 .output(clippedAudioTempFilePath)
                 .on('start', commandLine => {
-                console.log(`FFmpeg audio command: ${commandLine}`);
+                sendProgress('FFmpeg audio command started.');
             })
                 .on('end', () => {
-                console.log('Descarga y recorte de audio completados');
+                sendProgress('Audio download and clipping completed.');
                 resolve();
             })
                 .on('error', (err, stdout, stderr) => {
-                console.error(`FFmpeg audio error: ${err.message}`);
-                console.error(`FFmpeg audio stdout: ${stdout}`);
-                console.error(`FFmpeg audio stderr: ${stderr}`);
+                sendProgress(`FFmpeg audio error: ${err.message}`);
                 reject(err);
             })
                 .run();
         });
-        try {
-            yield Promise.all([downloadAndClipVideo, downloadAndClipAudio]);
-            console.log('Iniciando combinación final con FFmpeg...');
-            // Crear archivo temporal para la salida
-            const outputTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}.mp4`);
-            (0, fluent_ffmpeg_1.default)()
-                .input(clippedVideoTempFilePath)
-                .input(clippedAudioTempFilePath)
-                .on('start', commandLine => {
-                console.log(`FFmpeg final command: ${commandLine}`);
-            })
-                .on('error', (err, stdout, stderr) => {
-                console.error(`FFmpeg final error: ${err.message}`);
-                console.error(`FFmpeg final stdout: ${stdout}`);
-                console.error(`FFmpeg final stderr: ${stderr}`);
-                if (!res.headersSent) {
-                    res.status(500).json({ error: 'Error al procesar el video final' });
-                }
-                fs_1.default.unlink(clippedVideoTempFilePath, () => { });
-                fs_1.default.unlink(clippedAudioTempFilePath, () => { });
-                fs_1.default.unlink(outputTempFilePath, () => { });
-            })
-                .on('end', () => {
-                console.log('Combinación final completada con éxito');
-                fs_1.default.unlink(clippedVideoTempFilePath, () => { });
-                fs_1.default.unlink(clippedAudioTempFilePath, () => { });
-                // Leer el archivo de salida y enviarlo al cliente
-                res.header('Content-Disposition', `attachment; filename="clip.mp4"`);
-                res.contentType('video/mp4');
-                const outputStream = fs_1.default.createReadStream(outputTempFilePath);
-                outputStream.pipe(res).on('finish', () => {
-                    console.log('Stream finished');
-                    fs_1.default.unlink(outputTempFilePath, () => { });
-                });
-            })
-                .videoCodec('libx264')
-                .audioCodec('aac')
-                .outputOptions('-c copy') // Copiar el audio y video sin recodificación
-                .format('mp4')
-                .save(outputTempFilePath);
-        }
-        catch (error) {
-            console.error('Error durante la descarga y recorte:', error);
-            res.status(500).json({ error: 'Error durante la descarga y recorte de video/audio' });
-        }
+        yield Promise.all([downloadAndClipVideo, downloadAndClipAudio]);
+        sendProgress('Starting final FFmpeg merge...');
+        let outputFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}.mp4`);
+        (0, fluent_ffmpeg_1.default)()
+            .input(clippedVideoTempFilePath)
+            .input(clippedAudioTempFilePath)
+            .on('start', commandLine => {
+            sendProgress('FFmpeg merge command started.');
+        })
+            .on('end', () => {
+            sendProgress('Merging completed successfully.');
+            fs_1.default.unlink(clippedVideoTempFilePath, () => { });
+            fs_1.default.unlink(clippedAudioTempFilePath, () => { });
+            // Enviar URL del archivo finalizado al cliente
+            sendProgress(`${JSON.stringify({ message: "File ready", file: outputFilePath })}`);
+        })
+            .on('error', (err, stdout, stderr) => {
+            sendProgress(`FFmpeg final error: ${err.message}`);
+            fs_1.default.unlink(clippedVideoTempFilePath, () => { });
+            fs_1.default.unlink(clippedAudioTempFilePath, () => { });
+            fs_1.default.unlink(outputFilePath, () => { });
+            res.status(500).json({ error: 'Error al procesar el video final' });
+        })
+            .videoCodec('libx264')
+            .audioCodec('aac')
+            .outputOptions('-c copy') // Copiar el audio y video sin recodificación
+            .format('mp4')
+            .save(outputFilePath);
     }
     catch (error) {
-        console.error('Error en downloadvideoAndProcess:', error);
+        console.error('Error en downloadAndProcessVideo:', error);
+        res.status(500).json({ error: 'Error en downloadAndProcessVideo' });
     }
 });
 exports.downloadAndProcessVideo = downloadAndProcessVideo;

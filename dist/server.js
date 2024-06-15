@@ -17,16 +17,19 @@ const path_1 = __importDefault(require("path"));
 const clipExtractor_1 = require("./clipExtractor");
 const videoProcessor_1 = require("./videoProcessor");
 const cors_1 = __importDefault(require("cors"));
+const compression_1 = __importDefault(require("compression"));
+const fs_1 = __importDefault(require("fs"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 app.use(express_1.default.json());
-app.use((0, cors_1.default)()); //generic cors for test
+app.use((0, cors_1.default)());
+app.use((0, compression_1.default)());
 app.get('/', (req, res) => {
     console.log('GET /');
     res.sendFile(path_1.default.join(__dirname, '..', 'index.html'));
 });
 app.post('/download', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { url, quality = 'lowest' } = req.body;
+    const { url, quality = 'highestvideo' } = req.body;
     console.log('POST /download', url);
     const clipInfo = yield (0, clipExtractor_1.extractVideoIdAndClipTimes)(url);
     if (!clipInfo) {
@@ -35,8 +38,25 @@ app.post('/download', (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
     const videoUrl = `https://www.youtube.com/watch?v=${clipInfo.videoId}`;
     console.log(`Video URL: ${videoUrl}`);
-    yield (0, videoProcessor_1.downloadAndProcessVideo)(videoUrl, clipInfo, quality, res);
+    yield (0, videoProcessor_1.downloadAndProcessVideo)(videoUrl, clipInfo, quality, req, res);
 }));
+// Endpoint para servir el archivo finalizado
+app.post('/download-file', (req, res) => {
+    const { file } = req.body;
+    if (!file) {
+        return res.status(404).send('No file available');
+    }
+    res.download(file, 'clip.mp4', (err) => {
+        if (err) {
+            console.error('Error sending file:', err);
+            res.status(500).send('Error sending file');
+        }
+        else {
+            // Eliminar el archivo después de enviarlo
+            fs_1.default.unlink(file, () => { });
+        }
+    });
+});
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);
 });
