@@ -34,9 +34,9 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
         };
         sendProgress('Starting video download and processing...');
         const info = yield ytdl_core_1.default.getInfo(videoUrl);
-        const formats = ytdl_core_1.default.filterFormats(info.formats, format => format.container === 'mp4');
-        //const format = ytdl.chooseFormat(formats, { quality: videoQuality });
-        let format = ytdl_core_1.default.chooseFormat(formats, { quality: '720p' });
+        let videos = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
+        let format = ytdl_core_1.default.chooseFormat(videos, { filter: format => format.qualityLabel === '720p' || format.qualityLabel === '480p' });
+        console.log(format);
         sendProgress('Video info retrieved.');
         const downloadAndClipVideo = new Promise((resolve, reject) => {
             (0, fluent_ffmpeg_1.default)(format.url)
@@ -113,7 +113,8 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
     }
     catch (error) {
         console.error('Error en downloadAndProcessVideo:', error);
-        res.status(500).json({ error: 'Error en downloadAndProcessVideo' });
+        res.write(`data: ${JSON.stringify({ error: 'Error en downloadAndProcessVideo' })}\n\n`);
+        res.end();
     }
 });
 exports.downloadAndProcessVideo = downloadAndProcessVideo;

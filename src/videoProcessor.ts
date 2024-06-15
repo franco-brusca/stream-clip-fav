@@ -10,7 +10,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
   try {
     const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
     const clippedAudioTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-audio.mp4`);
-
+    
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -25,9 +25,10 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
     sendProgress('Starting video download and processing...');
 
     const info = await ytdl.getInfo(videoUrl);
-    const formats = ytdl.filterFormats(info.formats, format => format.container === 'mp4');
-    //const format = ytdl.chooseFormat(formats, { quality: videoQuality });
-    let format = ytdl.chooseFormat(formats, { quality: '720p' });
+    let videos = ytdl.filterFormats(info.formats, 'videoonly');
+    let format = ytdl.chooseFormat(videos, { filter: format => format.qualityLabel === '720p' || format.qualityLabel === '480p'});
+    console.log(format)
+   
     sendProgress('Video info retrieved.');
 
     const downloadAndClipVideo = new Promise<void>((resolve, reject) => {
@@ -110,6 +111,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
       .save(outputFilePath);
   } catch (error) {
     console.error('Error en downloadAndProcessVideo:', error);
-    res.status(500).json({ error: 'Error en downloadAndProcessVideo' });
+    res.write(`data: ${JSON.stringify({ error: 'Error en downloadAndProcessVideo' })}\n\n`);
+    res.end();
   }
 };
