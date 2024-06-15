@@ -9,7 +9,7 @@
     "clear-cache": "npm cache clean --force"
   },
   "engines": {
-    "node": "20.x",
+    "node": "18.x",
     "npm": "9.x"
   },
   "dependencies": {
