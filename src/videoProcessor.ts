@@ -26,7 +26,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
 
     const info = await ytdl.getInfo(videoUrl);
     let videos = ytdl.filterFormats(info.formats, 'videoonly');
-    let format = ytdl.chooseFormat(videos, { filter: format => format.qualityLabel === '480p'});
+    let format = ytdl.chooseFormat(videos, { filter: format => format.qualityLabel === '480p' && format.container === 'mp4'});
     console.log(format)
    
     sendProgress('Video info retrieved.');

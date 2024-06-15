@@ -35,7 +35,7 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
         sendProgress('Starting video download and processing...');
         const info = yield ytdl_core_1.default.getInfo(videoUrl);
         let videos = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
-        let format = ytdl_core_1.default.chooseFormat(videos, { filter: format => format.qualityLabel === '480p' });
+        let format = ytdl_core_1.default.chooseFormat(videos, { filter: format => format.qualityLabel === '480p' && format.container === 'mp4' });
         console.log(format);
         sendProgress('Video info retrieved.');
         const downloadAndClipVideo = new Promise((resolve, reject) => {
