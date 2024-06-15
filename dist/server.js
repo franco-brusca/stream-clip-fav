@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '..', 'index.html'));
 });
 app.post('/download', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { url, quality = 'highest' } = req.body;
+    const { url, quality = 'highestvideo' } = req.body;
     console.log('POST /download', url);
     const clipInfo = yield (0, clipExtractor_1.extractVideoIdAndClipTimes)(url);
     if (!clipInfo) {

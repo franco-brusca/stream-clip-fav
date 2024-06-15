@@ -35,7 +35,8 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
         sendProgress('Starting video download and processing...');
         const info = yield ytdl_core_1.default.getInfo(videoUrl);
         const formats = ytdl_core_1.default.filterFormats(info.formats, format => format.container === 'mp4');
-        const format = ytdl_core_1.default.chooseFormat(formats, { quality: videoQuality });
+        //const format = ytdl.chooseFormat(formats, { quality: videoQuality });
+        let format = ytdl_core_1.default.chooseFormat(formats, { quality: '720p' });
         sendProgress('Video info retrieved.');
         const downloadAndClipVideo = new Promise((resolve, reject) => {
             (0, fluent_ffmpeg_1.default)(format.url)

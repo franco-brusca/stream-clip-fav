@@ -26,7 +26,8 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
 
     const info = await ytdl.getInfo(videoUrl);
     const formats = ytdl.filterFormats(info.formats, format => format.container === 'mp4');
-    const format = ytdl.chooseFormat(formats, { quality: videoQuality });
+    //const format = ytdl.chooseFormat(formats, { quality: videoQuality });
+    let format = ytdl.chooseFormat(formats, { quality: '720p' });
     sendProgress('Video info retrieved.');
 
     const downloadAndClipVideo = new Promise<void>((resolve, reject) => {
