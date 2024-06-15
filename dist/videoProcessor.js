@@ -19,6 +19,21 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const os_1 = __importDefault(require("os"));
 const uuid_1 = require("uuid");
+function write(jsonObject) {
+    // Convertir el objeto JSON a una cadena de texto con formato
+    const jsonString = JSON.stringify(jsonObject, null, 2);
+    // Ruta del archivo de salida
+    const outputFilePath = 'output.txt';
+    // Escribir la cadena de texto en un archivo
+    fs_1.default.writeFile(outputFilePath, jsonString, (err) => {
+        if (err) {
+            console.error('Error escribiendo el archivo:', err);
+        }
+        else {
+            console.log('Archivo guardado exitosamente:', outputFilePath);
+        }
+    });
+}
 const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const clippedVideoTempFilePath = path_1.default.join(os_1.default.tmpdir(), `${(0, uuid_1.v4)()}-video.mp4`);
@@ -34,16 +49,16 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
         };
         sendProgress('Starting video download and processing...');
         const info = yield ytdl_core_1.default.getInfo(videoUrl);
-        let videos = ytdl_core_1.default.filterFormats(info.formats, 'videoonly');
-        let format = ytdl_core_1.default.chooseFormat(videos, { quality: "lowestvideo" });
-        console.log(format);
+        let format = ytdl_core_1.default.chooseFormat(info.formats, { quality: videoQuality });
         sendProgress('Video info retrieved.');
         const downloadAndClipVideo = new Promise((resolve, reject) => {
             (0, fluent_ffmpeg_1.default)(format.url)
                 .setStartTime(clipInfo.startTime)
                 .setDuration(clipInfo.endTime - clipInfo.startTime)
-                .outputOptions('-c:v libx264')
-                .outputOptions('-preset ultrafast')
+                .outputOptions([
+                '-c:v libx264',
+                '-preset ultrafast',
+            ])
                 .output(clippedVideoTempFilePath)
                 .on('start', commandLine => {
                 sendProgress('FFmpeg video command started.');

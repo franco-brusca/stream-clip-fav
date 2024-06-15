@@ -6,6 +6,24 @@ import path from 'path';
 import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 
+
+function write(jsonObject) {
+  // Convertir el objeto JSON a una cadena de texto con formato
+const jsonString = JSON.stringify(jsonObject, null, 2);
+
+// Ruta del archivo de salida
+const outputFilePath = 'output.txt';
+
+// Escribir la cadena de texto en un archivo
+fs.writeFile(outputFilePath, jsonString, (err) => {
+  if (err) {
+    console.error('Error escribiendo el archivo:', err);
+  } else {
+    console.log('Archivo guardado exitosamente:', outputFilePath);
+  }
+});
+}
+
 export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { videoId: string, startTime: number, endTime: number }, videoQuality: string, req: Request, res: Response): Promise<void> => {
   try {
     const clippedVideoTempFilePath = path.join(os.tmpdir(), `${uuidv4()}-video.mp4`);
@@ -25,18 +43,18 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
     sendProgress('Starting video download and processing...');
 
     const info = await ytdl.getInfo(videoUrl);
-    let videos = ytdl.filterFormats(info.formats, 'videoonly');
-    let format = ytdl.chooseFormat(videos, { quality: "lowestvideo"});
-    console.log(format)
+    let format = ytdl.chooseFormat(info.formats, { quality: videoQuality});
    
     sendProgress('Video info retrieved.');
 
     const downloadAndClipVideo = new Promise<void>((resolve, reject) => {
       ffmpeg(format.url)
         .setStartTime(clipInfo.startTime)
-        .setDuration(clipInfo.endTime - clipInfo.startTime)
-        .outputOptions('-c:v libx264')
-        .outputOptions('-preset ultrafast')
+        .setDuration(clipInfo.endTime - clipInfo.startTime)   
+        .outputOptions([
+          '-c:v libx264', 
+          '-preset ultrafast', 
+        ])
         .output(clippedVideoTempFilePath)
         .on('start', commandLine => {
           sendProgress('FFmpeg video command started.');
