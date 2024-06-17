@@ -43,7 +43,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
     sendProgress('Starting video download and processing...');
 
     const info = await ytdl.getInfo(videoUrl);
-    let format = ytdl.chooseFormat(info.formats, { quality: videoQuality});
+    let format = ytdl.chooseFormat(info.formats, {  filter: format => format.quality === 'large' });
    
     sendProgress('Video info retrieved.');
 
@@ -61,7 +61,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
         })
         .on('progress', progress => {
           if(progress.percent)
-          sendProgress(`{"progress": "${(progress.percent).toFixed(2)}%"}`)
+          sendProgress(`{"progress": "${(progress.percent * 10).toFixed(2)}%"}`)
         })
         .on('end', () => {
           sendProgress(`{"progress": "100%"}`)

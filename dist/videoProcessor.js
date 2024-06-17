@@ -49,7 +49,7 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
         };
         sendProgress('Starting video download and processing...');
         const info = yield ytdl_core_1.default.getInfo(videoUrl);
-        let format = ytdl_core_1.default.chooseFormat(info.formats, { quality: videoQuality });
+        let format = ytdl_core_1.default.chooseFormat(info.formats, { filter: format => format.quality === 'large' });
         sendProgress('Video info retrieved.');
         const downloadAndClipVideo = new Promise((resolve, reject) => {
             (0, fluent_ffmpeg_1.default)(format.url)
@@ -65,7 +65,7 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
             })
                 .on('progress', progress => {
                 if (progress.percent)
-                    sendProgress(`{"progress": "${(progress.percent).toFixed(2)}%"}`);
+                    sendProgress(`{"progress": "${(progress.percent * 10).toFixed(2)}%"}`);
             })
                 .on('end', () => {
                 sendProgress(`{"progress": "100%"}`);
