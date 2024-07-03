@@ -49,7 +49,7 @@ const downloadAndProcessVideo = (videoUrl, clipInfo, videoQuality, req, res) => 
         };
         sendProgress('Starting video download and processing...');
         const info = yield ytdl_core_1.default.getInfo(videoUrl);
-        let format = ytdl_core_1.default.chooseFormat(info.formats, { filter: format => format.quality === 'large' });
+        let format = ytdl_core_1.default.chooseFormat(info.formats, { quality: videoQuality });
         sendProgress('Video info retrieved.');
         const downloadAndClipVideo = new Promise((resolve, reject) => {
             (0, fluent_ffmpeg_1.default)(format.url)

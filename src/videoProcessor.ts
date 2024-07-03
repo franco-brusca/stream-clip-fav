@@ -43,7 +43,7 @@ export const downloadAndProcessVideo = async (videoUrl: string, clipInfo: { vide
     sendProgress('Starting video download and processing...');
 
     const info = await ytdl.getInfo(videoUrl);
-    let format = ytdl.chooseFormat(info.formats, {  filter: format => format.quality === 'large' });
+    let format = ytdl.chooseFormat(info.formats, {quality:videoQuality});
    
     sendProgress('Video info retrieved.');
 
