@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(cors());
 app.use(compression())
 
+
 app.get('/', (req: Request, res: Response) => {
   console.log('GET /');
   res.sendFile(path.join(__dirname, '..', 'index.html'));
