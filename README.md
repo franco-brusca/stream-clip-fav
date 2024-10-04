@@ -1,15 +1,19 @@
-
 # Stream Clip Fav
 
 Este proyecto es una aplicación web que permite descargar clips de YouTube utilizando Node.js, Express y ffmpeg.
 
+> Aclaración: Esto es un prototipo que no pudimos terminar por falta de tiempo, todavía tiene muchas mejoras por delante. Si tenés interés en contribuir, adelante.
+
 ## Requisitos
 
-- Node.js (v14 o superior)
-- npm (v6 o superior)
-- ffmpeg
-- Docker (para uso con Docker Compose)
-- Docker Compose (v3.8 o superior)
+- [Node.js](https://nodejs.org/en) (v14 o superior)
+- npm (v6 o superior) (viene incluído en la instalación de Node)
+- [ffmpeg](https://www.ffmpeg.org/download.html)
+
+### Requisitos para usar con Docker
+
+- [Docker](https://docs.docker.com/get-started/get-docker/) (para uso con Docker Compose)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v3.8 o superior)
 
 ## Instalación
 
@@ -20,11 +24,28 @@ git clone https://github.com/franco-brusca/stream-clip-fav.git
 cd stream-clip-fav
 ```
 
-### Instalación con Node.js y npm
+### Instalación y Uso con Node.js y npm
+
+1. Correr los comandos de instalación, compilación e iniciación
 
 ```bash
 npm install
+npm build
+npm start
 ```
+
+2. Ir a https://localhost:3000.
+3. Pegar un link de un clip de YouTube en la caja de texto.
+4. Click en el botón de "Download".
+5. Se verá un (no muy acertado) progreso hasta finalizar.
+
+> Tip: En la consola del navegador, en la pestaña de "Network" se podrá ver el estado de la request y los errores en caso de fallo.
+
+Cada tanto suele fallar porque YouTube actualiza su seguridad, normalmente se corrige actualizando el paquete que se encarga de _hackear_ youtube.
+
+Comando para actualizar ese paquete a su última versión:
+
+`npm install @distube/ytdl-core@latest`
 
 ### Instalación y Uso con Docker
 
@@ -35,26 +56,29 @@ npm install
 #### Levantar los Servicios con Docker Compose
 
 1. Construye y levanta los servicios utilizando Docker Compose:
-    ```bash
-    docker-compose up --build
-    ```
+
+   ```bash
+   docker-compose up --build
+   ```
 
 2. La aplicación estará disponible en `http://localhost:3000`.
 
 3. Para verificar el estado de los servicios:
-    ```bash
-    docker-compose ps
-    ```
+
+   ```bash
+   docker-compose ps
+   ```
 
 4. Para revisar los logs de la aplicación:
-    ```bash
-    docker-compose logs app
-    ```
+
+   ```bash
+   docker-compose logs app
+   ```
 
 5. Para detener los servicios:
-    ```bash
-    docker-compose down
-    ```
+   ```bash
+   docker-compose down
+   ```
 
 ## Uso
 
@@ -90,10 +114,7 @@ Para descargar el clip realiza una solicitud POST al endpoint `/download-fIle`:
 curl -X POST http://localhost:3000/enqueue -H "Content-Type: application/json" -d '{"file": "/tmp/fef45e1b-473a-45c3-912e-e5ab04e89c6a.mp4"}'
 ```
 
-
 ## To-Do List
 
 - Validar que el % esté bien seteado.
-- Probar con videos de menor calidad.
-- Quitar el path completo del archivo (no es seguro).
 - Estandarizar los mensajes push para progress, etc.
